@@ -79,7 +79,7 @@ for it in range(sortedPathPoints.shape[1]):
     currIdx = sortedPathPoints[:,it]
     
     # define enemy mode
-    if not(it%4):
+    if not(it%2):
         enMode = 1
     else:
         enMode = 0
