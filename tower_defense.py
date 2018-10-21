@@ -4,30 +4,31 @@ print("#==============================#")
 import numpy as np
 import matplotlib.pyplot as plt
 from scipy import misc
+from utils.monster import Monster
 
 print("")
 print("#==============================#")
 print("#  Define Global Variables")      
 print("#==============================#")
 MAP_DIR = "./maps/test/" 
-ENEMY_DIR = "./enemies/" 
+MONSTER_DIR = "./monsters/" 
      
 
 print("")
 print("#==============================#")
-print("#  Compute Enemy Path")      
+print("#  Compute Monster Path")      
 print("#==============================#")     
 print("#")
-print("#  load enemy path image")
-enemyPathImg = misc.imread(MAP_DIR+"enemy_path.png")[...,:3]
+print("#  load monster path image")
+monsterPathImg = misc.imread(MAP_DIR+"monster_path.png")[...,:3]
 
 print("#")
-print("#  find enemy entry point")      
-pathStart = np.asanyarray(np.where(enemyPathImg[...,0] == 255))
+print("#  find monster entry point")      
+pathStart = np.asanyarray(np.where(monsterPathImg[...,0] == 255))
 
 print("#")
 print("#  find path points")
-pathPoints = np.asanyarray(np.where(enemyPathImg[...,2] == 255))
+pathPoints = np.asanyarray(np.where(monsterPathImg[...,2] == 255))
 
 print("#")
 print("#  perform region growing to find order in which path is travelled")
@@ -53,42 +54,32 @@ for it in range(pathPoints.shape[1]):
 
 print("")
 print("#==============================#")
-print("#  Walk Enemy Path")      
+print("#  Walk Monster Path")      
 print("#==============================#")
 print("#")
 print("#  load landscape image")
 landscapeImg = misc.imread(MAP_DIR+"landscape.png")[...,:3]      
 
 print("#")
-print("#  load enemy image")
-# load first enemy image to get the shape 
-enemy_blobb_tmp = misc.imread(ENEMY_DIR+"blobb/blobb_1.png")[...,:3]
-
-# store first and additionally load second enemy image
-enemy_blobb = np.zeros((2,)+enemy_blobb_tmp.shape)
-enemy_blobb[0,...] = enemy_blobb_tmp
-enemy_blobb[1,...] = misc.imread(ENEMY_DIR+"blobb/blobb_2.png")[...,:3]
+print("#  define monsters")
+blobbs = Monster(MONSTER_DIR+"blobb/",sortedPathPoints)
       
 print("#")
 print("#  visualize the walking")      
 plt.figure(1)
 landscapeImg_tmp = np.copy(landscapeImg)
 
-for it in range(sortedPathPoints.shape[1]):
-    # get current path point
-    currIdx = sortedPathPoints[:,it]
-    
-    # define enemy mode
-    if not(it%2):
-        enMode = 1
-    else:
-        enMode = 0
+#for it in range(sortedPathPoints.shape[1]): 
+globalIdx = 0
+while(True):   
+    # update the monsters visual mode
+    blobbs.updateMonsterVizMode(globalIdx)
     
     # draw monster partially
-    xDim = np.min([enemy_blobb.shape[1],currIdx[0]])
-    yDim = np.min([enemy_blobb.shape[2],currIdx[1]])
-    landscapeImg_tmp[currIdx[0]-xDim:currIdx[0],
-                         currIdx[1]-yDim:currIdx[1],:] = enemy_blobb[enMode,-xDim:,-yDim:]       
+    dim = blobbs.getDrawingDim()
+    currIdx = blobbs.getPathPoint()
+    landscapeImg_tmp[currIdx[0]-dim[0]:currIdx[0],
+                     currIdx[1]-dim[1]:currIdx[1],:] = blobbs.drawMonster(dim)
     
     # update figure
     plt.clf()
@@ -97,3 +88,9 @@ for it in range(sortedPathPoints.shape[1]):
 
     # reset landscape
     landscapeImg_tmp = np.copy(landscapeImg)
+    
+    # update monster's path position
+    blobbs.updatePathPoint(1)
+    
+    # update global iterator
+    globalIdx += 1
