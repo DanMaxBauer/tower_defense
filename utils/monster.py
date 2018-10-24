@@ -17,22 +17,16 @@ class Monster:
         # initialize the classes content
         self.img = img
         self.dim = np.asarray(img.shape[1:3]).reshape(2,1)
-        self.path = path
+        self.pathLength = path.shape[1]
         self.pathIdx = 0
         self.vizMode = int(0)
-        
-    def getPathPoint(self):
-        '''
-        return the current path point the monster is located at
-        '''
-        return self.path[:,self.pathIdx]
     
-    def getDrawingDim(self):
+    def getDrawingDim(self,currPathPoint):
         '''
         return the dimensional portion of the monster that fits in the image
         based on the current path position
         '''
-        dimensions = np.append(self.dim,self.getPathPoint().reshape(2,1), axis=1)
+        dimensions = np.append(self.dim,currPathPoint.reshape(2,1), axis=1)
         
         return np.min(dimensions,axis=1)
     
@@ -57,4 +51,4 @@ class Monster:
         '''
         update the monsters current path point
         '''
-        self.pathIdx = np.clip(self.pathIdx+it,0,self.path.shape[1]-1)
+        self.pathIdx = np.clip(self.pathIdx+it,0,self.pathLength-1)
