@@ -15,7 +15,7 @@ class Environment:
         self.backgroundImg = misc.imread(mapDir+"landscape.png")[...,:3]
         
         # define the monster rounds
-        self.waves = [[50,"blobb"],[50,"blobb","blobb"],[50,"blobb","blobb","blobb"]]
+        self.waves = [[50,"blobb"],[50,"dot","blobb"],[50,"blobb","dot","blobb"]]
         
         # directery where all monster files are stored
         self.monsterDir = monsterDir
@@ -79,7 +79,8 @@ class Environment:
         '''
         add the next monster to the monsters list
         '''
-        self.monsters.insert(0,Monster(self.monsterDir+"blobb/",self.monsterPath))
+        monsterName = self.waves[self.waveIdx][self.monsterIdx]
+        self.monsters.insert(0,Monster(self.monsterDir+monsterName,self.monsterPath))
         
     def drawMonsters(self):
         '''
