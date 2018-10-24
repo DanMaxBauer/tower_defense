@@ -1,10 +1,11 @@
 from scipy import misc
 import numpy as np
 from utils.monster import Monster
+import json
 
 
 class Environment:
-    def __init__(self,mapDir,monsterDir):
+    def __init__(self,mapDir,monsterDir,waveDir):
         '''
         initialize the monsters path, the maps background and the monster waves
         '''
@@ -15,7 +16,10 @@ class Environment:
         self.backgroundImg = misc.imread(mapDir+"landscape.png")[...,:3]
         
         # define the monster rounds
-        self.waves = [[50,"blobb"],[50,"dot","blobb"],[50,"blobb","dot","blobb"]]
+        with open(waveDir+"wave.txt", "rb") as fp:
+#            # example
+#            self.waves = [[50,"blobb"],[50,"dot","blobb"],[50,"blobb","dot","blobb"]]
+            self.waves = json.load(fp)
         
         # directery where all monster files are stored
         self.monsterDir = monsterDir

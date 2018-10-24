@@ -11,13 +11,14 @@ print("#  Define Global Variables")
 print("#==============================#")
 MAP_DIR = "./maps/test_1/" 
 MONSTER_DIR = "./monsters/" 
+WAVE_DIR = "./waves/test/"
      
 
 print("")
 print("#==============================#")
 print("#  Define the Environment")      
 print("#==============================#")     
-environment = Environment(MAP_DIR,MONSTER_DIR)
+environment = Environment(MAP_DIR,MONSTER_DIR,WAVE_DIR)
 plt.pause(0.1)    
 
 print("")
