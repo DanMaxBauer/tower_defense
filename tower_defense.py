@@ -29,18 +29,35 @@ print("#")
 print("#  visualize the walking")      
 plt.figure(1)
 boxProps = dict(boxstyle='round', facecolor='wheat', alpha=0.5)
-text = "HP: "+str(100)+"/"+str(100)+"\n"+"$: "+str(10)
 
-while(True):      
+winText = "You somehow did it ^.^"
+looseText = "You lost...as suspected..."
+
+frameRate = 0.01 # [s]
+gameStat = 0
+
+while not(gameStat):      
     # update environment
-    environmentImg = environment.updateEnvironment()    
+    environmentImg, gameStat = environment.updateEnvironment()    
+    mapStatus = "HP: "+str(environment.health)+"/"+str(100)+"\n"+"$: "+str(environment.money)
     
     # update figure
     plt.clf()
-    plt.imshow(environmentImg)        
-    plt.text(1, 0.95, text, fontsize=14,
+    plt.imshow(environmentImg)
+    
+    # shows game status
+    if (gameStat==0):
+        plt.text(1, 0.95, mapStatus, fontsize=14,
+            verticalalignment='top', bbox=boxProps)
+        
+    elif (gameStat==1):
+        plt.text(1, 0.95, looseText, fontsize=14,
         verticalalignment='top', bbox=boxProps)
-    plt.pause(0.01)
+        
+    elif(gameStat==2):
+        plt.text(1, 0.95, winText, fontsize=14,
+        verticalalignment='top', bbox=boxProps)    
+    plt.pause(frameRate)
 
     # DEBUGGING    
 #    print("num Monsters:",len(environment.monsters))

@@ -10,9 +10,10 @@ class Monster:
         img_1 = misc.imread(imgDir+"/m_1.png")[...,:3]
         
         # store first and additionally load second monster image
-        img = np.zeros((2,)+img_1.shape)
+        img = np.zeros((3,)+img_1.shape)
         img[0,...] = img_1
         img[1,...] = misc.imread(imgDir+"/m_2.png")[...,:3]
+        img[2,...] = misc.imread(imgDir+"/dead.png")[...,:3]
         
         # initialize the classes content
         self.img = img
@@ -20,6 +21,8 @@ class Monster:
         self.pathLength = path.shape[1]
         self.pathIdx = 0
         self.vizMode = int(0)
+        self.damage = 1
+        self.despawnTimer = 5
     
     def getDrawingDim(self,currPathPoint):
         '''
@@ -38,11 +41,13 @@ class Monster:
         
         return self.img[self.vizMode,-dim[0]:,-dim[1]:]
 
-    def updateMonsterVizMode(self,globalIterator):
+    def updateMonsterVizMode(self,globalIterator,endPointFlag):
         '''
         switch between monsters visual modes
         '''
-        if not(globalIterator%2):
+        if (endPointFlag):
+            self.vizMode = 2
+        elif not(globalIterator%2):
             self.vizMode = 1
         else:
             self.vizMode = 0
@@ -52,3 +57,11 @@ class Monster:
         update the monsters current path point
         '''
         self.pathIdx = np.clip(self.pathIdx+it,0,self.pathLength-1)
+        
+        # in case end point has been reached, return the damage the monster afflicts
+        if (self.pathIdx == (self.pathLength-1)):
+            return True
+        else:
+            return False
+            
+        

@@ -42,6 +42,15 @@ class Environment:
         # global counter to track the overall program iteration
         self.globalIdx = np.uint64(0)
         
+        # indicates how much damage you can take before you loose
+        self.health = 100
+        
+        # amount of money the play has to buy stuff
+        self.money = 10
+        
+        # indicates whether the game is over
+        self.gameStat = 0
+        
         
     def computeMonsterPath(self,mapDir):
         '''
@@ -79,35 +88,92 @@ class Environment:
             
         return sortedPathPoints
     
-    def spawnMonster(self,monsterName):
+    def spawnMonster(self):
         '''
         add the next monster to the monsters list
         '''
-        monsterName = self.waves[self.waveIdx][self.monsterIdx]
-        self.monsters.insert(0,Monster(self.monsterDir+monsterName,self.monsterPath))
+        # time since the current wave started
+        waveTime = self.waves[self.waveIdx][0] - self.waveCountDown
         
-    def drawMonsters(self):
-        '''
-        draw all monster into the environment that are currently in the monsters 
-        list.
-        '''
-        backgroundImg_tmp = np.copy(self.backgroundImg)
+        # amount of monsters left in the wave
+        numMonsterInWave = len(self.waves[self.waveIdx])
         
-        for monster in self.monsters:
-            currPathPoint = self.monsterPath[:,monster.pathIdx]
-            dim = monster.getDrawingDim(currPathPoint)
-            backgroundImg_tmp[currPathPoint[0]-dim[0]:currPathPoint[0],
-                              currPathPoint[1]-dim[1]:currPathPoint[1],:] = monster.drawMonster(dim)
+        # spawn next monster, if enough time has past AND any monsters are left in the wave
+        if not(waveTime % self.dMonsterSpawnTime) and (self.monsterIdx < numMonsterInWave):
+            monsterName = self.waves[self.waveIdx][self.monsterIdx]
+            self.monsters.insert(0,Monster(self.monsterDir+monsterName,self.monsterPath))
+            self.monsterIdx += 1
             
-        return backgroundImg_tmp
+    def killMonster(self,idx):
+        '''
+        remove monster from monster list if killed or reached end of path
+        '''
+        del self.monsters[idx]
+        
+        
+        
+    def drawMonsters(self,monster,backgroundImg):
+        '''
+        draw the given monster into the environment 
+        '''
+        currPathPoint = self.monsterPath[:,monster.pathIdx]
+        dim = monster.getDrawingDim(currPathPoint)
+        backgroundImg[currPathPoint[0]-dim[0]:currPathPoint[0],
+                      currPathPoint[1]-dim[1]:currPathPoint[1],:] = monster.drawMonster(dim)
+            
+        return backgroundImg
     
     def updateMonsters(self):
         '''
         update the state of all monsters
         '''
-        for monster in self.monsters:
-            monster.updateMonsterVizMode(self.globalIdx)
-            monster.updatePathPoint(1)
+        # spawn next monster
+        self.spawnMonster() 
+        
+        # update monsters in map
+        backgroundImg_tmp = np.copy(self.backgroundImg)
+        
+        for it in range(len(self.monsters)):
+            # get current monster
+            monster = self.monsters[it]
+            
+            # update its position, appearance and draw it on the map
+            endPointFlag = monster.updatePathPoint(1)
+            monster.updateMonsterVizMode(self.globalIdx,endPointFlag)            
+            backgroundImg_tmp = self.drawMonsters(monster,backgroundImg_tmp)
+            
+            
+            if (endPointFlag) and (monster.despawnTimer>0):
+                monster.despawnTimer -= 1
+            
+            # remove monster if despawn timer is run to zero
+            if not(monster.despawnTimer):
+                self.health -= monster.damage
+                self.killMonster(it)
+            
+        return backgroundImg_tmp
+    
+    def updateGameState(self):
+        '''
+        set game state to over
+        if all monsters are dead and no more monsters are in queue 
+        OR if health has reached zero
+        '''
+        areMonstersLeftInGame = len(self.monsters)
+        areMonstersLeftInWave = self.monsterIdx < len(self.waves[self.waveIdx])
+        isItLastWave = not(self.waveIdx < (len(self.waves)-1))
+        
+        # you loose
+        if (self.health==0):
+            self.gameStat = 1
+            
+        # you win
+        elif (not(areMonstersLeftInGame) and 
+            not(areMonstersLeftInWave) and
+            (isItLastWave)):            
+            self.gameStat = 2
+        
+        
     
     def updateEnvironment(self):
         '''
@@ -117,22 +183,13 @@ class Environment:
         if (self.waveCountDown == 0) and (self.waveIdx < (len(self.waves)-1) ):
             self.waveIdx += 1
             self.waveCountDown = self.waves[self.waveIdx][0]
-            self.monsterIdx = 1
-        
-        # time since the current wave started
-        waveTime = self.waves[self.waveIdx][0] - self.waveCountDown
-        
-        # spawn next monster, if any left in the wave
-        numMonsterInWave = len(self.waves[self.waveIdx])
-        if not(waveTime % self.dMonsterSpawnTime) and (self.monsterIdx < numMonsterInWave):
-            self.spawnMonster(self.waves[self.waveIdx][self.monsterIdx])
-            self.monsterIdx += 1                    
+            self.monsterIdx = 1             
         
         # update all monster states
-        self.updateMonsters()
+        environmentImg = self.updateMonsters()
         
-        # draw all monsters in the environment
-        environmentImg = self.drawMonsters()
+        # test whether the game is already over
+        self.updateGameState()
         
         # update count down
         if (self.waveCountDown > 0):
@@ -141,7 +198,7 @@ class Environment:
         # increase global counter
         self.globalIdx += 1
         
-        return environmentImg
+        return environmentImg, self.gameStat
             
      
         
